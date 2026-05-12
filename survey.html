@@ -806,6 +806,7 @@ tr:nth-child(even) td{background:#f8f9fb;}
 <div id="adm">
   <div class="ah"><h2>관리자 패널</h2><p>소방공무원 스트레스 회복력 강화 프로그램 개발 연구</p></div>
   <div class="aa">
+    <button class="ab" onclick="resendAll()" style="background:#10b981;color:#fff;">☁️ 구글시트 재전송</button>
     <button class="ab" onclick="dlXlsx()" style="background:var(--navy);color:#fff;">📥 Excel 다운로드</button>
     <button class="ab" onclick="loadAdm()" style="background:var(--navy2);color:#fff;">🔄 새로고침</button>
     <button class="ab" onclick="clearData()" style="background:#f3f4f6;color:var(--tx);">🗑 초기화</button>
@@ -1347,6 +1348,20 @@ function loadAdm() {
   const allKeys = data.length ? Object.keys(data[0]) : [];
   document.querySelector('#adm-tbl thead').innerHTML='<tr>'+allKeys.map(k=>`<th>${k}</th>`).join('')+'</tr>';
   document.querySelector('#adm-tbl tbody').innerHTML=data.map(r=>'<tr>'+allKeys.map(k=>`<td title="${r[k]||''}">${r[k]||'-'}</td>`).join('')+'</tr>').join('');
+}
+async function resendAll() {
+  if (!SCRIPT_URL) { alert('SCRIPT_URL이 설정되지 않았습니다.'); return; }
+  const data = JSON.parse(localStorage.getItem('survey_data')||'[]');
+  if (!data.length) { alert('전송할 데이터가 없습니다.'); return; }
+  if (!confirm(`${data.length}건을 구글시트로 전송할까요?`)) return;
+  let ok = 0, fail = 0;
+  for (const row of data) {
+    try {
+      await fetch(SCRIPT_URL, {method:'POST', mode:'no-cors', body:JSON.stringify(row)});
+      ok++;
+    } catch(e) { fail++; }
+  }
+  alert(`전송 완료! 성공 ${ok}건${fail?` / 실패 ${fail}건`:''}\n구글시트에서 확인해 주세요.`);
 }
 function clearData() { if(confirm('모든 응답 데이터를 삭제하시겠습니까?')){ localStorage.removeItem('survey_data'); loadAdm(); } }
 function dlXlsx() {
