@@ -1297,7 +1297,7 @@ async function submitSurvey() {
   localStorage.setItem('survey_data', JSON.stringify(all));
 
   if (SCRIPT_URL) {
-    try { await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(save)}); }
+    try { await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(save)}); }
     catch(e) { console.warn(e); }
   }
   currentPage = TOTAL_PAGES-1;
