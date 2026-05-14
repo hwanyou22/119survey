@@ -171,6 +171,11 @@ tr:nth-child(even) td{background:#f8f9fb;}
 .reason-box{background:var(--bg);border-radius:9px;padding:12px 13px;}
     .reason-lbl{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:8px;display:flex;align-items:center;gap:7px;}
     .reason-lbl::before{content:"";display:inline-block;width:3px;height:14px;background:var(--acc);border-radius:2px;flex-shrink:0;}
+    .phone-seg-wrap{display:flex;align-items:center;border:1.5px solid var(--bd);border-radius:10px;overflow:hidden;transition:border-color .15s;background:#fff;margin-top:8px;}
+    .phone-seg-wrap:focus-within{border-color:var(--acc);}
+    .seg-inp{flex:1;border:none;outline:none;text-align:center;font-size:16px;font-weight:500;color:var(--tx);padding:13px 4px;background:transparent;font-family:"Noto Sans KR",sans-serif;width:0;min-width:0;}
+    .seg-inp::placeholder{color:#bbb;font-weight:400;font-size:14px;}
+    .seg-dash{font-size:17px;color:#ccc;flex-shrink:0;user-select:none;}
     @media(max-width:400px){.lk-btn .l{display:none;}.intro-h1{font-size:16px;}}
 </style>
 </head>
@@ -212,7 +217,22 @@ tr:nth-child(even) td{background:#f8f9fb;}
     </div>
     <div style="margin-top:11px;">
       <label style="font-size:12.5px;font-weight:600;color:var(--navy);">휴대폰 번호 <span style="font-size:11px;font-weight:400;color:var(--txl);">(선택, 리워드 추첨용)</span></label>
-      <input class="inp" type="tel" id="phone-input" placeholder="010-0000-0000" inputmode="numeric" style="margin-top:8px;">
+      <div class="phone-seg-wrap" id="pw-main">
+          <input class="seg-inp" id="phone-a" type="tel" inputmode="numeric" maxlength="3" placeholder="010"
+            oninput="handleSeg(this,'phone-b',3,'pw-main')"
+            style="margin-top:0;">
+          <span class="seg-dash">-</span>
+          <input class="seg-inp" id="phone-b" type="tel" inputmode="numeric" maxlength="4" placeholder="0000"
+            oninput="handleSeg(this,'phone-c',4,'pw-main')"
+            onkeydown="handleBack(this,'phone-a',event)"
+            style="margin-top:0;">
+          <span class="seg-dash">-</span>
+          <input class="seg-inp" id="phone-c" type="tel" inputmode="numeric" maxlength="4" placeholder="0000"
+            oninput="handleSeg(this,null,4,'pw-main')"
+            onkeydown="handleBack(this,'phone-b',event)"
+            style="margin-top:0;">
+        </div>
+        <input type="hidden" id="phone-input">
     </div>
   </div>
 </div>
@@ -836,7 +856,19 @@ tr:nth-child(even) td{background:#f8f9fb;}
 
     <div class="q-block" style="margin-bottom:16px;">
       <div class="q-lbl">연락처 <span class="req">*</span></div>
-      <input class="inp" type="tel" id="itv_phone" placeholder="010-0000-0000" inputmode="numeric" style="margin-top:0;">
+      <div class="phone-seg-wrap" id="pw-itv">
+        <input class="seg-inp" id="itv-phone-a" type="tel" inputmode="numeric" maxlength="3" placeholder="010"
+          oninput="handleSeg(this,'itv-phone-b',3,'pw-itv')">
+        <span class="seg-dash">-</span>
+        <input class="seg-inp" id="itv-phone-b" type="tel" inputmode="numeric" maxlength="4" placeholder="0000"
+          oninput="handleSeg(this,'itv-phone-c',4,'pw-itv')"
+          onkeydown="handleBack(this,'itv-phone-a',event)">
+        <span class="seg-dash">-</span>
+        <input class="seg-inp" id="itv-phone-c" type="tel" inputmode="numeric" maxlength="4" placeholder="0000"
+          oninput="handleSeg(this,null,4,'pw-itv')"
+          onkeydown="handleBack(this,'itv-phone-b',event)">
+      </div>
+      <input type="hidden" id="itv_phone">
       <div class="err" id="err-itv_phone">이 항목은 필수입니다.</div>
     </div>
 
@@ -1044,6 +1076,23 @@ function tcSub(id, val, el, subId) {
   tc(id, val, el);
   const sub = document.getElementById(subId);
   if (sub) sub.classList.toggle('show', A[id].includes(val));
+}
+
+// ── 전화번호 분할 입력
+function handleSeg(el, nextId, maxLen, wrapId) {
+  el.value = el.value.replace(/\D/g,'');
+  if (el.value.length >= maxLen && nextId) document.getElementById(nextId).focus();
+  // hidden input에 조합값 저장
+  const prefix = wrapId === 'pw-main' ? 'phone' : 'itv-phone';
+  const hiddenId = wrapId === 'pw-main' ? 'phone-input' : 'itv_phone';
+  const a = document.getElementById(prefix+'-a')?.value||'';
+  const b = document.getElementById(prefix+'-b')?.value||'';
+  const c = document.getElementById(prefix+'-c')?.value||'';
+  const hidden = document.getElementById(hiddenId);
+  if (hidden) hidden.value = (a||b||c) ? a+'-'+b+'-'+c : '';
+}
+function handleBack(el, prevId, e) {
+  if (e.key==='Backspace' && el.value==='') document.getElementById(prevId)?.focus();
 }
 
 // ── 인터뷰 방식 복수선택
@@ -1254,7 +1303,7 @@ function validatePage(p) {
     if (!A.interview_yn) { showErr('err-interview_yn'); ok=false; }
     if (ok && A.interview_yn==='yes') {
       if (!document.getElementById('itv_name')?.value.trim()) { showErr('err-itv_name'); ok=false; }
-      if (!document.getElementById('itv_phone')?.value.trim()) { showErr('err-itv_phone'); ok=false; }
+      if (!document.getElementById('itv_phone')?.value) { showErr('err-itv_phone'); ok=false; }
     }
   }
   return ok;
@@ -1317,7 +1366,7 @@ async function submitSurvey() {
   A.timestamp = endTime.toLocaleString('ko-KR');
   const startMs = A.startTime ? new Date(A.startTime.replace(/\./g,'/').replace(' ', 'T')) : null;
   const durationMin = startMs ? Math.round((endTime - startMs) / 60000) : '';
-  A.phone     = document.getElementById('phone-input').value.trim();
+  A.phone     = document.getElementById('phone-input')?.value||'';
   A.q1_9_text = document.getElementById('q1_9_text').value.trim();
   A.q1_13     = document.getElementById('q1_13').value.trim();
   A.q3_1_reason = document.getElementById('q3_1_reason')?.value.trim()||'';
