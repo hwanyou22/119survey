@@ -1664,6 +1664,34 @@ function dlXlsx() {
   ];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(catRows), '범주형 분석');
 
+  // ── 시트4: 인터뷰 신청자
+  const itvApplicants = data
+    .filter(r => r['인터뷰 참여의향'] === '참여')
+    .map((r, i) => ({
+      '번호': i + 1,
+      '성함': r['인터뷰_성함'] || '',
+      '연락처': r['인터뷰_연락처'] || '',
+      '이메일': r['인터뷰_이메일'] || '',
+      '소속 기관': r['인터뷰_소속기관'] || '',
+      '인터뷰 방식': r['인터뷰_방식'] || '',
+      '희망 일정': r['인터뷰_희망일정'] || '',
+      '응답 시각': r['응답종료'] || '',
+      '소방서명': r['Q1-9 소방서명'] || '',
+      '현재 직무': r['Q1-5 현재직무'] || '',
+      '총 경력': r['Q1-4 총경력'] || '',
+      '일정 조율 완료': '',
+      '인터뷰 완료': '',
+      '비고': ''
+    }));
+
+  if (itvApplicants.length > 0) {
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itvApplicants), '인터뷰 신청자');
+  } else {
+    XLSX.utils.book_append_sheet(wb,
+      XLSX.utils.json_to_sheet([{ '안내': '아직 인터뷰 참여 신청자가 없습니다.' }]),
+      '인터뷰 신청자');
+  }
+
   XLSX.writeFile(wb, `소방공무원_설문_${new Date().toLocaleDateString('ko-KR').replace(/\.\s/g,'-').replace('.','')}.xlsx`);
 }
 
